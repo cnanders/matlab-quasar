@@ -51,11 +51,11 @@ x(t) and y(t)
 The `quasar` function accepts six optional parameters in any order
 
 ```matlab
-% @param {double 1x1} [radiusPole1 = 0.5] - inner radius of poles [0 : 1]
-% @param {double 1x1} [radiusPole2 = 0.7] - outer radius of poles [0 : 1]
+% @param {double 1x1} [radiusPoleInner = 0.5] - inner radius of poles [0 : 1]
+% @param {double 1x1} [radiusPoleOuter = 0.7] - outer radius of poles [0 : 1]
 % @param {uint8 1x1} [numArcs = 9] - number of arcs per pole (> 3 and odd)
+% @param {double 1x1} [theta = 30] - substended angle of poles (deg) [0 : 90]
 % @param {uint8 1x1} [numPoles = 4] - number of poles (> 0)
-% @param {double 1x1} [theta = 30] - angle subtended by poles (deg) [0 : 90]
 % @param {double 1x1} [dt = 10e-6] - separation of time samples (sec)
 % @param {double 1x1} [period = 100e-3] - period of 1 full cycle (sec)
 ```
