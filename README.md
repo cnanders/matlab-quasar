@@ -1,19 +1,6 @@
 # MATLAB Quasar Illumination Waveform Generator
 
-Generates  x(t) y(t) continuous waveforms suitable for a tip/tilt scanner to “paint” an arbitrary quasar illumination pattern in time.  The following parameters can be varied:
-
-- number of poles 
-- angle subtended by each polee
-- radii of each pole (inner and outer)
-- number of arcs per pole
-- period of the waveform (sec)
-- time sampling of the waveform (sec)
-
-
-The connecting straight paths between the arcs of each a pole and the connecing curved paths between each pole are part of the output waveforms.  This enables smooth, continuous mechanical motion of the tip/tilt scanner  
-
-Global rotations, offsets, and amplitude scaling should be applied on the data returned by the `quasar` function.  E.g., if the tip/tilt mirror is not at normal incidence, the amplitude of the resulting waveforms will need to be scaled by sin(AOI). 
-
+Generates  x(t) y(t) continuous waveforms suitable for a tip/tilt scanner to “paint” an arbitrary quasar illumination pattern in time.  
 
 # Examples
 
@@ -59,6 +46,8 @@ x(t) and y(t)
 
 # Documentation
 
+
+
 The `quasar` function accepts six optional parameters in any order
 
 ```matlab
@@ -92,7 +81,7 @@ out = quasar(...
 
 # Rotations, Offsets, and Scaling
 
-Rotations, offsets, and scaling can be applied to the data returned by `quasar`.  For example, a rotation of 45 degrees can be applied to a dipole quasar pattern.
+Global rotations, offsets, and scaling can be applied to the data returned by `quasar`.  For example, a rotation of 45 degrees can be applied to a dipole quasar pattern.
 
 ```matlab
 out = quasar(...
@@ -114,3 +103,10 @@ theta = theta + pi/4;
 Dipole x(t) vs y(t) after 45-degree rotation
 
 ![Quasar Rotated Dipole Illumination](img/dipole-rotated-45.jpg?raw=true)
+
+If the tip/tilt mirror is not at normal incidence, the amplitude of the resulting waveforms will need to be scaled by sin(AOI), for example.
+
+
+# Connecting Paths
+
+The connecting straight paths between the arcs of each a pole and the connecing curved paths between each pole are part of the output waveforms.  This enables smooth, continuous mechanical motion of the tip/tilt scanner  
