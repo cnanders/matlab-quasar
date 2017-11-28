@@ -2,11 +2,16 @@ close all
 clc
 clear
 
+% add src to path
+[path, name, ext] = fileparts(mfilename('fullpath'));
+addpath(genpath(fullfile(path, '..', 'src')))
+
 out = quasar(...
+    'radiusPoleInner', 0.2, ...
+    'radiusPoleOuter', 1, ...
+    'numArcs', uint8(25), ...
     'numPoles', uint8(2), ...
-    'theta', 120, ...
-    'numR', uint8(7) ...
-);
+    'theta', 120);
 
 x = out.x;
 y = out.y;
@@ -14,7 +19,7 @@ r = out.r;
 theta = out.theta;
 t = out.t;
 
-figure
+figure('Color', 'white')
 subplot(121)
 plot(r, '.-b')
 title('r')
@@ -24,14 +29,16 @@ plot(theta, '.-b')
 title('theta')
 
 
-figure
-plot(x, y)
+figure('Color', 'white')
+plot(x, y, '.-b')
+xlabel('x')
+ylabel('y')
 axis image
 xlim([-1 1])
 ylim([-1 1])
 
 
-figure
+figure('Color', 'white')
 hold on
 plot(t, x, '.-r');
 plot(t, y, '.-b')
@@ -39,7 +46,7 @@ legend({'x', 'y'})
 xlabel('time');
 ylabel('amp [arb]')
 
-figure
+figure('Color', 'white')
 plot3(x, y, t, '.-b')
 xlabel('x')
 ylabel('y')

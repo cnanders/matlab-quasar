@@ -5,13 +5,13 @@
 % @property {double 1xm} theta - theta values [0, 2pi]
 % @property {double 1xm} t - time values
 
-% @param {double 1x1} r1 - inner radius [0 : 1]
-% @param {double 1x1} r2 - outer radius [0 : 1]
-% @param {uint8 1x1} numR - number of radii per pole > 3 and odd
-% @param {double 1x1} theta - pole substended angle (deg) [0 : 90]
-% @param {uint8 1x1} numPoles - number of poles > 0
-% @param {double 1x1} dt - separation of time samples (s)
-% @param {double 1x1} period - period of 1 full cycle
+% @param {double 1x1} [radiusPoleInner = 0.5] - inner radius of poles [0 : 1]
+% @param {double 1x1} [radiusPoleOuter = 0.7] - outer radius of poles [0 : 1]
+% @param {uint8 1x1} [numArcs = 9] - number of arcs per pole (> 3 and odd)
+% @param {double 1x1} [theta = 30] - substended angle of poles (deg) [0 : 90]
+% @param {uint8 1x1} [numPoles = 4] - number of poles (> 0)
+% @param {double 1x1} [dt = 10e-6] - separation of time samples (sec)
+% @param {double 1x1} [period = 100e-3] - period of 1 full cycle (sec)
 % @return {quasar_data 1x1}
 
 function [out] = quasar(varargin)
@@ -23,23 +23,36 @@ function [out] = quasar(varargin)
     iseven = @(x) mod(x, 2) == 0;
     isodd = @(x) mod(x, 2) ~= 0;
 
-    addParameter(p, 'r1', 0.5, @(x) isscalar(x) && isnumeric(x) && (x > 0) && (x <= 1))
-    addParameter(p, 'r2', 0.7, @(x) isscalar(x) && isnumeric(x) && (x > 0) && (x <= 1))
-    addParameter(p, 'numR', 9, @(x) isscalar(x) && isinteger(x) && (x > 0) && isodd(x))
+    addParameter(p, 'radiusPoleInner', 0.5, @(x) isscalar(x) && isnumeric(x) && (x > 0) && (x <= 1))
+    addParameter(p, 'radiusPoleOuter', 0.7, @(x) isscalar(x) && isnumeric(x) && (x > 0) && (x <= 1))
+    addParameter(p, 'numArcs', 9, @(x) isscalar(x) && isinteger(x) && (x >= 3) && isodd(x))
     addParameter(p, 'theta', 30, @(x) isscalar(x) && isnumeric(x) && (x > 0))
     addParameter(p, 'numPoles', 4, @(x) isscalar(x) && isinteger(x) && (x > 0))
+    
+    %{
+    addParameter(p, 'rot', 0, @(x) isscalar(x) && isnumeric(x))
+    addParameter(p, 'offsetX', 0, @(x) isscalar(x) && isnumeric(x) && (x >=-1) && (x <= 1))
+    addParameter(p, 'offsetY', 0, @(x) isscalar(x) && isnumeric(x) && (x >=-1) && (x <= 1))
+    %}
+    
     addParameter(p, 'dt', 10e-6, @(x) isscalar(x) && isnumeric(x) && (x > 0))
     addParameter(p, 'period', 100e-3, @(x) isscalar(x) && isnumeric(x) && (x > 0))
 
     parse(p, varargin{:});
 
-    r1 = p.Results.r1;
-    r2 = p.Results.r2;
-    numR = double(p.Results.numR);
+    radiusPoleInner = p.Results.radiusPoleInner;
+    radiusPoleOuter = p.Results.radiusPoleOuter;
+    numArcs = double(p.Results.numArcs);
     theta = p.Results.theta;
     numPoles = double(p.Results.numPoles);
     dt = p.Results.dt;
     period = p.Results.period;
+    
+    %{
+    rot = p.Results.rot;
+    offsetX = p.Results.offsetX;
+    offsetY = p.Results.offsetY;
+    %}
     
     
     %% Begin
@@ -57,9 +70,9 @@ function [out] = quasar(varargin)
     % more elegant ways to build this code involveing reflections and such
     % but I didn't care about elegance; I wanted to get it working.
 
-    % each pole has numR - 1 radial connectors
-    % their combined length is r2 - r1
-    length_radial_connectors = numPoles * (r2 - r1);
+    % each pole has numArcs - 1 radial connectors
+    % their combined length is radiusPoleOuter - radiusPoleInner
+    length_radial_connectors = numPoles * (radiusPoleOuter - radiusPoleInner);
 
 
     % angle for all arc connectors
@@ -69,11 +82,11 @@ function [out] = quasar(varargin)
     % compute the length of all inner connectors and all outer
     % arc connectors.  This assumes numPoles is even.  Eventually, I
     % generalized this to work with numPoles odd as well.  When numPoles is odd
-    % the last arc connector has to go from r2 to r1 so its length is only
+    % the last arc connector has to go from radiusPoleOuter to radiusPoleInner so its length is only
     % approximated by the math here.
 
-    length_arc_connectors_inner = (angle_for_arc_connectors / 2) * pi / 180 * r1;
-    length_arc_connectors_outer = (angle_for_arc_connectors / 2) * pi / 180 * r2;
+    length_arc_connectors_inner = (angle_for_arc_connectors / 2) * pi / 180 * radiusPoleInner;
+    length_arc_connectors_outer = (angle_for_arc_connectors / 2) * pi / 180 * radiusPoleOuter;
 
     length_arc_connector_inner = length_arc_connectors_inner / (numPoles / 2);
     length_arc_connector_outer = length_arc_connectors_outer / (numPoles / 2);
@@ -81,9 +94,9 @@ function [out] = quasar(varargin)
     length_arc_connectors = length_arc_connectors_inner + length_arc_connectors_outer;
 
     % list of radius values of the arcs within each pole
-    r = linspace(r1, r2, numR);
+    r = linspace(radiusPoleInner, radiusPoleOuter, numArcs);
 
-    % length of the {numR} archs of {numPoles} poles
+    % length of the {numArcs} archs of {numPoles} poles
     length_arcs = sum(theta_rad .* r) * numPoles;
 
     % length of one fill
@@ -96,7 +109,7 @@ function [out] = quasar(varargin)
     samples_of_arc_connector_outer = length_arc_connector_outer / length_period * samples;
     samples_of_arc_connector_inner = length_arc_connector_inner / length_period * samples;
 
-    samples_of_radial_connector = (r2 - r1) / (numR - 1) / length_period * samples;
+    samples_of_radial_connector = (radiusPoleOuter - radiusPoleInner) / (numArcs - 1) / length_period * samples;
 
     % the above samples_* variables are not integers.  In the code below I
     % round to integer numbers.  The result is where different lines join,
@@ -196,7 +209,7 @@ function [out] = quasar(varargin)
                     % last arc connector needs to radially move from out to in
                     % since there is an even number of poles and we ended on the 
                     % outside but need to get back to the inside
-                    r_line = linspace(r2, r1, length(theta_line));
+                    r_line = linspace(radiusPoleOuter, radiusPoleInner, length(theta_line));
                 else
 
                     r_line = r(m) * ones(size(theta_line));
@@ -211,7 +224,7 @@ function [out] = quasar(varargin)
     end
 
     % theta_out = theta_out + 45;
-
+    
     t = 0 : dt : (length(r_out) - 1) * dt;
     x = r_out .* cos(theta_out * pi / 180);
     y = r_out .* sin(theta_out * pi / 180);
