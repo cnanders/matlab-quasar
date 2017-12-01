@@ -54,17 +54,17 @@ The `quasar` function accepts six optional parameters in any order
 % @param {double 1x1} [radiusPoleInner = 0.5] - inner radius of poles [0 : 1]
 % @param {double 1x1} [radiusPoleOuter = 0.7] - outer radius of poles [0 : 1]
 % @param {uint8 1x1} [numArcs = 9] - number of arcs per pole (> 3 and odd)
-% @param {double 1x1} [theta = 30] - substended angle of poles (deg) [0 : 90]
+% @param {double 1x1} [theta = 30] - angle subtended by each pole (deg) [0 : 90]
 % @param {uint8 1x1} [numPoles = 4] - number of poles (> 0)
-% @param {double 1x1} [dt = 10e-6] - separation of time samples (sec)
+% @param {double 1x1} [dt = 10e-6] - time separation of samples (sec)
 % @param {double 1x1} [period = 100e-3] - period of 1 full cycle (sec)
 ```
 
 The `quasar` function returns a structure with the following properties:
 
 ```matlab
-% @property {double 1xm} x - x values [0 : 1]
-% @property {double 1xm} y - y values [0 : 1]
+% @property {double 1xm} x - x values [-1 : 1]
+% @property {double 1xm} y - y values [-1 : 1]
 % @property {double 1xm} r - r values [0 : 1]
 % @property {double 1xm} theta - theta values [0, 2pi]
 % @property {double 1xm} t - time values
@@ -76,7 +76,6 @@ out = quasar(...
     'numPoles', uint8(2), ...
     'numArcs', uint8(17) ...
     'theta', 120, ...
-
 );
 ```
 
