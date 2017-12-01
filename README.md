@@ -57,7 +57,7 @@ The `quasar` function accepts six optional parameters in any order
 % @param {double 1x1} [theta = 30] - angle subtended by each pole (deg) (> 0)
 % @param {uint8 1x1} [numPoles = 4] - number of poles (> 0)
 % @param {double 1x1} [dt = 10e-6] - time separation of samples (sec)
-% @param {double 1x1} [period = 100e-3] - period of 1 full cycle (sec)
+% @param {double 1x1} [period = 100e-3] - period of one full cycle (sec)
 ```
 
 The `quasar` function returns a structure with the following properties:
