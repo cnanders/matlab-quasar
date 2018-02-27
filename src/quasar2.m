@@ -15,7 +15,10 @@
 % @param {double 1x1} [period = 100e-3] - period of 1 full cycle (sec)
 % @return {quasar_data 1x1}
 
-function [out] = quasar(varargin)
+% This differs from quasar (original) because each pole goes out and back
+% and all transitions occur in the ctner
+
+function [out] = quasar2(varargin)
     
     %% Input Validation and Parsing
     
@@ -47,10 +50,7 @@ function [out] = quasar(varargin)
     
     samples = period / dt;
     theta_rad = theta * pi / 180;  
-    
-    
-    
-    
+        
 
     % the general strategy is to compute the length of the drawn path assuming
     % that the circle has a radius of 1.  The path is comprised of:
@@ -64,11 +64,14 @@ function [out] = quasar(varargin)
 
     % each pole has numArcs - 1 radial connectors
     % their combined length is radiusPoleOuter - radiusPoleInner
-    length_radial_connectors = numPoles * (radiusPoleOuter - radiusPoleInner);
-
+    length_radial_connectors = numPoles * (radiusPoleOuter - radiusPoleInner) * 2;
+     % there are (numArcs - 1) * 2 radial connectors per pole (out and back)
+    length_radial_connector = length_radial_connectors / ((numArcs - 1) * 2 * numPoles);
+    
+    
     % by subtracting the angle subtended by all of the poles from 360, the 
     % angle for all arc connectors remains.  
-    angle_for_arc_connectors = 360 - numPoles * theta;
+    angle_for_arc_connectors = 360 - numPoles * theta; % degrees
 
     % there are an even number of inner and outer arc connectors
     % This assumes numPoles is even.  Eventually, I
@@ -76,16 +79,13 @@ function [out] = quasar(varargin)
     % the last arc connector has to go from radiusPoleOuter to radiusPoleInner so its length is only
     % approximated by the math here.
 
-    length_arc_connectors_inner = (angle_for_arc_connectors / 2) * pi / 180 * radiusPoleInner;
-    length_arc_connectors_outer = (angle_for_arc_connectors / 2) * pi / 180 * radiusPoleOuter;
-
-    length_arc_connector_inner = length_arc_connectors_inner / (numPoles / 2);
-    length_arc_connector_outer = length_arc_connectors_outer / (numPoles / 2);
-
-    length_arc_connectors = length_arc_connectors_inner + length_arc_connectors_outer;
+    length_arc_connectors = angle_for_arc_connectors * pi / 180 * radiusPoleInner;
+    length_arc_connector = length_arc_connectors / numPoles;
 
     % list of radius values of the arcs within each pole
     r = linspace(radiusPoleInner, radiusPoleOuter, numArcs);
+    r = [r fliplr(r(1 : end - 1))];
+    
 
     % length of the {numArcs} archs of {numPoles} poles
     length_arcs = sum(theta_rad .* r) * numPoles;
@@ -96,11 +96,10 @@ function [out] = quasar(varargin)
 
     % number of samples in each arc of a pole (orded by increasing radius)
     samples_of_arc =  theta_rad .* r / length_period * samples;
-
-    samples_of_arc_connector_outer = length_arc_connector_outer / length_period * samples;
-    samples_of_arc_connector_inner = length_arc_connector_inner / length_period * samples;
-
-    samples_of_radial_connector = (radiusPoleOuter - radiusPoleInner) / (numArcs - 1) / length_period * samples;
+    samples_of_arc_connector = length_arc_connector / length_period * samples;
+    % there are (numArcs - 1) * 2 radial connectors per pole (out and back)
+    
+    samples_of_radial_connector = length_radial_connector / length_period * samples;
 
     % the above samples_* variables are not integers.  In the code below I
     % round to integer numbers.  Where different lines join,
@@ -116,109 +115,59 @@ function [out] = quasar(varargin)
     theta_out = [];
 
     thetaPoleSep = 360 / numPoles;
-
+    
     for n = 1 : numPoles % poles
 
         theta_center = (n - 1) * thetaPoleSep;
         theta_start = theta_center - theta / 2;
         theta_end = theta_center + theta / 2;
+        
+        for m = 1 : length(r)
 
-        if mod(n, 2) == 0
-            % even pole (out to in)
-
-            for m = length(r) : -1 : 1
-
-                theta_line = linspace(theta_start, theta_end, round(samples_of_arc(m))); % counter clockwise
-                if mod(m, 2) == 0 % even === clockwise
-                    theta_line = fliplr(theta_line);
-                end
-                r_line = r(m) * ones(size(theta_line));
-
-                r_out = [r_out, r_line];
-                theta_out = [theta_out, theta_line];
-
-                % Add a connector from out to in at the last theta value
-
-                if (m > 1)
-                    r_line = linspace(r(m), r(m - 1), round(samples_of_radial_connector));
-                    theta_line = theta_line(end) * ones(size(r_line));
-                    r_out = [r_out, r_line];
-                    theta_out = [theta_out, theta_line];
-                end
-
-
+            % special case, if monopole, don't draw last arc
+            
+            if numPoles == 1 && m == length(r)
+                continue
             end
-
-            % add arc connector to next pole
-            % RECALL thetaPoleSep is angle between the center of adjacent
-            % poles (360 / numPoles)
-
-            theta_center = thetaPoleSep/2 + (n - 1) * thetaPoleSep;
-            theta_start = theta_center - (thetaPoleSep - theta) / 2;
-            theta_end = theta_center + (thetaPoleSep - theta) / 2;
-            theta_line = linspace(theta_start, theta_end, round(samples_of_arc_connector_inner));
+            
+            theta_line = linspace(theta_start, theta_end, round(samples_of_arc(m)));
+            
+            if mod(m, 2) == 0 % even
+                theta_line = fliplr(theta_line);
+            end
             r_line = r(m) * ones(size(theta_line));
 
             r_out = [r_out, r_line];
             theta_out = [theta_out, theta_line];
 
-        % end even pole (out to in)
-        else
-            % odd pole in to out
-            for m = 1 : length(r)
+            % Add a connector from in to out at the last theta value
 
-                theta_line = linspace(theta_start, theta_end, round(samples_of_arc(m)));
-                if mod(m, 2) == 0 % even
-                    theta_line = fliplr(theta_line);
-                end
-                r_line = r(m) * ones(size(theta_line));
-
+            if (m < length(r))
+                r_line = linspace(r(m), r(m + 1), round(samples_of_radial_connector));
+                theta_line = theta_line(end) * ones(size(r_line));
                 r_out = [r_out, r_line];
                 theta_out = [theta_out, theta_line];
-
-                % Add a connector from in to out at the last theta value
-
-                if (m < length(r))
-                    r_line = linspace(r(m), r(m + 1), round(samples_of_radial_connector));
-                    theta_line = theta_line(end) * ones(size(r_line));
-                    r_out = [r_out, r_line];
-                    theta_out = [theta_out, theta_line];
-                end
-
             end
 
-            % add arc connector to next pole
+        end
+        
+        % add arc connector to next pole
+        % RECALL thetaPoleSep is angle between the center of adjacent
+        % poles (360 / numPoles)
 
-            % SPECIAL CASE when numPoles === 1, copy a fliplr version of r_line
-            % and theta_line to r_out and theta_out
+        % Special case for monopole, no connector
+        if numPoles == 1
+            continue
+        end
+        
+        theta_center = thetaPoleSep/2 + (n - 1) * thetaPoleSep;
+        theta_start = theta_center - (thetaPoleSep - theta) / 2;
+        theta_end = theta_center + (thetaPoleSep - theta) / 2;
+        theta_line = linspace(theta_start, theta_end, round(samples_of_arc_connector));
+        r_line = r(m) * ones(size(theta_line));
 
-            if numPoles == 1
-
-                r_out = [r_out, fliplr(r_out)]
-                theta_out = [theta_out, fliplr(theta_out)]
-            else
-
-                theta_center = thetaPoleSep/2 + (n - 1) * thetaPoleSep;
-                theta_start = theta_center - (thetaPoleSep - theta) / 2;
-                theta_end = theta_center + (thetaPoleSep - theta) / 2;
-                theta_line = linspace(theta_start, theta_end, round(samples_of_arc_connector_outer));
-
-                if n == numPoles
-                    % last arc connector needs to radially move from out to in
-                    % since there is an even number of poles and we ended on the 
-                    % outside but need to get back to the inside
-                    r_line = linspace(radiusPoleOuter, radiusPoleInner, length(theta_line));
-                else
-
-                    r_line = r(m) * ones(size(theta_line));
-                end
-
-                r_out = [r_out, r_line];
-                theta_out = [theta_out, theta_line];
-
-            end
-
-        end % odd pole in to out
+        r_out = [r_out, r_line];
+        theta_out = [theta_out, theta_line];
     end
 
     % theta_out = theta_out + 45;
