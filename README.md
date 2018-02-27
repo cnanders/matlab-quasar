@@ -44,6 +44,20 @@ x(t) vs y(t)
 
 x(t) and y(t)
 
+
+## Out and Back Version (quasar2)
+
+The `quasar2` function is an altered version that performs an “out and back” on every pole and does all pole transitions on the central connecting arcs.
+
+quasar2 x(t) vs y(t)
+
+![Quasar Quadrupole Illumination](img/quasar-2-4-pole.jpg?raw=true)
+
+quasar2 x(t) vs y(t) vs t shows the trace in time
+
+![Quasar Quadrupole Illumination](img/quasar2-4-pole.gif?raw=true)
+
+
 # Documentation
 
 
